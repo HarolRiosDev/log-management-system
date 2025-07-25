@@ -1,46 +1,93 @@
+
 # 🚀 Event Ingestor Service
 
-Este repositorio contiene el microservicio `event-ingestor-service`, el primer componente de nuestra **Plataforma Distribuida de Procesamiento y Análisis de Eventos**. Su función principal es recibir eventos de log entrantes a través de una API REST, aplicar un procesamiento inicial de seguridad (cifrado/hashing) y publicar estos eventos en un sistema de mensajería para su posterior procesamiento asíncrono.
+[![Java](https://img.shields.io/badge/Java-21+-red?style=flat&logo=openjdk)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen?style=flat&logo=springboot)](https://spring.io/projects/spring-boot)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
+`event-ingestor-service` es el primer microservicio de nuestra **Plataforma Distribuida de Procesamiento y Análisis de Eventos**.  
+Su función principal es **recibir eventos de log** a través de una **API REST**, aplicar **cifrado/hashing** y publicarlos en un **broker de mensajería** para su posterior procesamiento asíncrono.
 
 ---
 
-## 🌟 Características Principales
-
-* **Ingesta de Eventos REST:** Proporciona un endpoint HTTP POST para la recepción de eventos de log en formato JSON.
-* **Procesamiento de Seguridad:** Implementa la lógica de **criptografía** para el cifrado y/o hashing de campos sensibles dentro de los eventos recibidos.
-* **Publicación de Eventos:** Envía los eventos procesados (y seguros) a un broker de mensajería (Kafka/RabbitMQ) para desacoplar el proceso de ingesta del procesamiento posterior.
-* **Desarrollo en Spring Boot:** Construido con el framework Spring Boot para un desarrollo rápido y eficiente.
-* **Contenerización:** Preparado para ser empaquetado y desplegado como un contenedor Docker.
-
----
-
-## 🛠️ Tecnologías Utilizadas
-
-* **Lenguaje:** Java 21+
-* **Framework:** Spring Boot 3.x
-* **Gestor de Dependencias:** Maven
-* **Servicios Web:** Spring Web (RESTful API)
-* **Utilidades:** Project Lombok (para reducir boilerplate)
-* **Herramientas de Desarrollo:** Spring Boot DevTools
+## 📑 Tabla de Contenidos
+- [🌟 Características](#-características)
+- [🛠 Tecnologías](#-tecnologías)
+- [⚙️ Configuración](#️-configuración)
+- [🧪 Uso de la API](#-uso-de-la-api)
+- [📜 Licencia](#-licencia)
 
 ---
 
-## 🚀 Cómo Empezar
+## 🌟 Características
+- **Ingesta de Eventos REST:** Endpoint HTTP `POST` para logs en JSON.
+- **Procesamiento de Seguridad:** Hashing y cifrado de campos sensibles.
+- **Publicación Asíncrona:** Envía eventos a Kafka (o RabbitMQ).
+- **Desarrollo Rápido:** Basado en Spring Boot 3.x.
+- **Contenerización:** Compatible con Docker.
 
-Sigue estos pasos para levantar y probar el servicio localmente.
+---
 
-### Prerequisitos
+## 🛠 Tecnologías
+- **Lenguaje:** Java 21+
+- **Framework:** Spring Boot 3.x
+- **Dependencias:** Maven, Lombok
+- **Servicios Web:** Spring Web (REST API)
+- **Herramientas:** Docker, DevTools
 
-Asegúrate de tener instalado en tu sistema:
+---
 
-* JDK 21+
-* Maven 3.x+
-* Git
-* Un IDE (IntelliJ IDEA, VS Code, Eclipse)
-* Postman o Insomnia (para probar la API)
+## ⚙️ Configuración
+<details>
+<summary><b>1. Prerequisitos</b></summary>
 
-### 1. Clonar el Repositorio
+- JDK **21+**
+- Maven **3.x+**
+- Git
+- IDE (IntelliJ, VS Code, Eclipse)
+- Postman o Insomnia
+</details>
+
+<details>
+<summary><b>2. Clonar el Repositorio</b></summary>
 
 ```bash
-git clone [https://github.com/HarolRiosDev/event-ingestor-service.git](https://github.com/HarolRiosDev/event-ingestor-service.git)
+git clone https://github.com/HarolRiosDev/event-ingestor-service.git
 cd event-ingestor-service
+```
+</details>
+
+<details>
+<summary><b>3. Compilar y Ejecutar</b></summary>
+
+```bash
+mvn clean package
+java -jar target/event-ingestor-service-0.0.1-SNAPSHOT.jar
+```
+
+O ejecuta directamente:
+
+```bash
+mvn spring-boot:run
+```
+</details>
+
+---
+
+## 🧪 Uso de la API
+- **Base URL:** `http://localhost:8080/api`
+- **Swagger UI:** `http://localhost:8080/swagger-ui.html`
+
+### ➕ Ejemplo de Petición
+```bash
+curl -X POST "http://localhost:8080/api/logs" -H "Content-Type: application/json" -d '{
+  "level": "INFO",
+  "message": "User login successful",
+  "sourceIp": "192.168.1.5"
+}'
+```
+
+---
+
+## 📜 Licencia
+Este proyecto está bajo la [Licencia Apache 2.0](LICENSE).
