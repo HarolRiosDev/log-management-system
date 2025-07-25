@@ -1,0 +1,425 @@
+# logs-api-unified.yaml
+openapi: 3.0.0
+info:
+  title: Log Events API
+  description: |
+    API unificada para la ingesta, procesamiento y consulta de eventos de log.
+    Este documento describe los contratos de los endpoints relacionados con logs,
+    aunque su implementación puede estar distribuida entre varios microservicios
+    (e.g., event-ingestor-service, event-query-service).
+  version: 1.0.0
+  contact:
+    name: HarolRiosDev # Actualizado con el nombre de contacto proporcionado
+    # email: tu.email@example.com # Puedes añadir tu email aquí
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:8080/api # URL base donde se espera que se ejecute la API (Ingestor)
+    description: Servidor de desarrollo local para Event Ingestor
+  - url: http://localhost:8081/api # Ejemplo de URL para Event Query Service
+    description: Servidor de desarrollo local para Event Query
+
+tags:
+  - name: Ingesta de Logs
+    description: Operaciones para recibir y pre-procesar eventos de log. (Implementado por `event-ingestor-service`)
+  - name: Consulta de Logs
+    description: Operaciones para buscar y recuperar eventos de log. (Implementado por `event-query-service`)
+  - name: Estado del Servicio
+    description: Endpoints para verificar la salud y el estado del microservicio.
+
+paths:
+  /health:
+    get:
+      tags:
+        - Estado del Servicio
+      summary: Comprueba el estado de salud del servicio.
+      description: |
+        Endpoint estándar para verificar si el microservicio está en funcionamiento y es accesible.
+        (Generalmente implementado por Spring Boot Actuator en cualquier servicio).
+      responses:
+        '200':
+          description: Servicio operativo.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+        '503':
+          $ref: "#/components/responses/ServiceUnavailable" # Usando componente reutilizable
+
+  /logs:
+    post:
+      tags:
+        - Ingesta de Logs
+      summary: Ingresar un nuevo evento de log individual.
+      description: |
+        Recibe un evento de log individual.
+        Este evento será pre-procesado (seguridad) y luego publicado en el broker de mensajes.
+        (Implementado por `event-ingestor-service`)
+      operationId: ingestLogEvent
+      requestBody:
+        description: Objeto del evento de log a ingresar.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogEventRequest'
+      responses:
+        '200':
+          description: Evento de log recibido y procesado con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestResponse' # Reutilizando esquema para la respuesta de éxito
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '415':
+          $ref: "#/components/responses/UnsupportedMediaType"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+        '503':
+          $ref: "#/components/responses/ServiceUnavailable"
+        '504':
+          $ref: "#/components/responses/Timeout"
+    get:
+      tags:
+        - Consulta de Logs
+      summary: Obtener una lista de eventos de log.
+      description: |
+        Recupera eventos de log, permitiendo filtros y paginación.
+        (Implementado por `event-query-service`)
+      operationId: getLogEvents
+      parameters:
+        - $ref: "#/components/parameters/level"
+        - $ref: "#/components/parameters/sourceIpHash"
+        - $ref: "#/components/parameters/startDate"
+        - $ref: "#/components/parameters/endDate"
+        - $ref: "#/components/parameters/size"       
+      responses:
+        '200':
+          description: Lista de eventos de log recuperados con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LogEventResponse'
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
+  /logs/batch:
+    post:
+      tags:
+        - Ingesta de Logs
+      summary: Ingresar múltiples eventos de log en un solo lote.
+      description: |
+        Recibe una lista de eventos de log en una única petición para una ingesta más eficiente.
+        Cada evento será pre-procesado individualmente y luego publicado en el broker de mensajes.
+        (Implementado por `event-ingestor-service` - Fase 2 de ingesta)
+      operationId: ingestLogEventsBatch
+      requestBody:
+        description: Lista de objetos de eventos de log a ingresar.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/LogEventRequest'
+      responses:
+        '200':
+          description: Lote de eventos de log recibidos y procesados con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Batch of 5 log events received and processed."
+                  processedCount:
+                    type: integer
+                    example: 5
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '415':
+          $ref: "#/components/responses/UnsupportedMediaType"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+        '503':
+          $ref: "#/components/responses/ServiceUnavailable"
+        '504':
+          $ref: "#/components/responses/Timeout"
+  /logs/{id}:
+    get:
+      tags:
+        - Consulta de Logs
+      summary: Obtener un evento de log específico por su ID.
+      description: |
+        Recupera los detalles de un evento de log utilizando su identificador único.
+        (Implementado por `event-query-service`)
+      operationId: getLogEventById
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        '200':
+          description: Evento de log encontrado y recuperado con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogEventResponse'
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  parameters:
+    id:
+      in: path
+      name: id
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: El ID único del evento de log.
+      example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"  
+    level:  
+      in: query
+      name: level
+      schema:
+        type: string
+        enum: [INFO, WARN, ERROR, DEBUG, TRACE]
+      description: Filtrar por nivel de log.
+    sourceIpHash:
+      in: query
+      name: sourceIpHash
+      schema:
+        type: string
+      description: Filtrar por el hash de la dirección IP de origen.
+    startDate:
+      in: query
+      name: startDate
+      schema:
+        type: string
+        format: date-time
+      description: Fecha y hora de inicio para el rango de búsqueda.
+    endDate:
+      in: query
+      name: endDate
+      schema:
+        type: string
+        format: date-time
+      description: Fecha y hora de fin para el rango de búsqueda.
+    page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      description: Número de página (0-indexed).
+    size:
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Número de elementos por página.  
+  schemas:
+    Error: # Definición del esquema de error proporcionado
+      type: object
+      description: "Data structure containing the details for errors"
+      properties:
+        timestamp:
+          type: "string"
+          format: "date-time"
+          example: "2021-03-20T10:00:00Z"
+        status:
+          type: "integer"
+          example: 400
+        error:
+          type: "string"
+          example: "Bad Request"
+        message:
+          type: "string"
+          example: "Invalid parameters"
+        path:
+          type: "string"
+          example: "/api/logs"
+
+    LogEventRequest:
+      type: object
+      required:
+        - level
+        - message
+        - sourceIp
+      properties:
+        level:
+          type: string
+          description: Nivel de severidad del log (ej. INFO, WARN, ERROR, DEBUG).
+          enum: [INFO, WARN, ERROR, DEBUG, TRACE]
+          example: INFO
+        message:
+          type: string
+          description: El mensaje principal del log.
+          example: "User 'john.doe' accessed resource /data/sensitive."
+        sourceIp:
+          type: string
+          description: Dirección IP de origen del evento. Campo sensible.
+          format: ipv4
+          example: "192.168.1.100"
+        serviceName:
+          type: string
+          description: Nombre del servicio de origen.
+          example: Invoice service
+    LogEventResponse: # Esquema completo del LogEvent tal como sería procesado o almacenado (con ID y timestamp y campos adicionales)
+      type: object
+      required:
+        - id
+        - timestamp
+        - level
+        - message
+        - sourceIp
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único del evento de log (generado por el servicio).
+          readOnly: true
+          example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+        timestamp:
+          type: string
+          format: date-time
+          description: Marca de tiempo ISO 8601 de cuándo fue recibido el evento.
+          readOnly: true
+          example: "2023-10-27T10:30:00Z"
+        level:
+          type: string
+          description: Nivel de severidad del log.
+          enum: [INFO, WARN, ERROR, DEBUG, TRACE]
+          example: INFO
+        message:
+          type: string
+          description: El mensaje principal del log (puede ser cifrado en el sistema).
+          example: "User 'john.doe' accessed resource /data/sensitive."
+        sourceIp:
+          type: string
+          description: Dirección IP de origen del evento (será hasheada internamente).
+          format: ipv4
+          example: "192.168.1.100"
+        encryptedMessage:
+          type: string
+          description: Mensaje del log cifrado (solo presente después del procesamiento interno en el almacenamiento).
+          nullable: true
+          readOnly: true
+        hashedSourceIp:
+          type: string
+          description: Dirección IP de origen hasheada (solo presente después del procesamiento interno en el almacenamiento).
+          nullable: true
+          readOnly: true
+          example: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" # SHA256 example
+        enrichedData:
+          type: object
+          description: Datos adicionales añadidos por el servicio de procesamiento.
+          nullable: true
+        alertType:
+          type: string
+          description: Tipo de alerta generada si el evento dispara una regla (ej. "SUSPICIOUS_LOGIN").
+          nullable: true
+
+    IngestResponse: # Reutilizando este esquema para la respuesta de éxito de ingesta
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Log event received and processed. ID: 123e4567-e89b-12d3-a456-426614174000"
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        timestamp:
+          type: string
+          format: date-time
+          description: Marca de tiempo ISO 8601 de cuándo fue procesado el evento.
+          readOnly: true
+          example: "2023-10-27T10:30:00Z"
+
+  responses: # Componentes de respuestas reutilizables
+    Created:
+      description: "Created"
+    NoContent:
+      description: "No content"
+    BadRequest:
+      description: "Bad Request"
+      content:
+       application/json:
+         schema:
+           $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: "Forbidden"
+      content:
+       application/json:
+         schema:
+           $ref: "#/components/schemas/Error"
+    Timeout:
+      description: "Timeout"
+      content:
+       application/json:
+         schema:
+           $ref: "#/components/schemas/Error"
+    InternalServerError:
+      description: "Internal Server Error"
+      content:
+       application/json:
+         schema:
+           $ref: "#/components/schemas/Error"
+    NotFound:
+      description: "Not Found"
+      content:
+       application/json:
+         schema:
+           $ref: "#/components/schemas/Error"
+    UnsupportedMediaType:
+      description: "Unsupported Media Type"
+      content:
+       application/json:
+         schema:
+           $ref: "#/components/schemas/Error"
+    ServiceUnavailable:
+      description: "Service Unavailable"
+      content:
+       application/json:
+         schema:
+           $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: "Unauthorized"
+      content:
+       application/json:
+         schema:
+           $ref: "#/components/schemas/Error"

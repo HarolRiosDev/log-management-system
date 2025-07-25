@@ -1,0 +1,16 @@
+{
+  "title": "Event ingestor service",
+  "groupId": "com.hr",
+  "artifactId": "event-ingestor-service",
+  "artifactVersion": "1.0.0",
+  "invokerPackage": "com.hr.eventingestor",
+  "basePackage": "com.hr.eventingestor.web",
+  "configPackage": "com.hr.eventingestor.web.config",
+  "apiPackage": "com.hr.eventingestor.web.api",
+  "modelPackage": "com.hr.eventingestor.web.dto",
+  "useSpringBoot3": true,
+  "useTags": true,
+  "interfaceOnly": true,
+  "skipDefaultInterface": true,
+  "requestMappingMode": "api_interface"
+}
