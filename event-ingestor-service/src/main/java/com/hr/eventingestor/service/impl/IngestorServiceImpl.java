@@ -79,7 +79,7 @@ public class IngestorServiceImpl implements IngestorService {
      */
     private LogEvent createAndProcessLogEvent(LogEventRequestDTO request) {
         UUID eventId = UUID.randomUUID();
-        Instant timestamp = Instant.now();
+        OffsetDateTime timestamp = OffsetDateTime.now();
 
         String hashedSourceIp = securityProcessor.hashSha256(request.getSourceIp());
         String encryptedMessage = securityProcessor.encryptAes(request.getMessage());

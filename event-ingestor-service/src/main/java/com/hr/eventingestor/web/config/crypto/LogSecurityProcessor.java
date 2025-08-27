@@ -16,12 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LogSecurityProcessor {
 
-    @Value("${env.aes-key}")
-    private String aesKey;
+    private final SecretKeySpec secretKey;
 
-    private SecretKeySpec secretKey;
-
-    public LogSecurityProcessor() {
+    public LogSecurityProcessor(@Value("${env.aes-key}") String aesKey) {
         try {
             // Inicializar la clave AES al construir el procesador
             byte[] keyBytes = aesKey.getBytes(StandardCharsets.UTF_8);

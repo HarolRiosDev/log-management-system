@@ -38,6 +38,7 @@ paths:
       description: |
         Endpoint estándar para verificar si el microservicio está en funcionamiento y es accesible.
         (Generalmente implementado por Spring Boot Actuator en cualquier servicio).
+      operationId: getHealthStatus
       responses:
         '200':
           description: Servicio operativo.

@@ -19,4 +19,17 @@ kafka:
     ingestor-output: event.raw.ingested
 
 env:
-  aes-key: ThisIsASecretKeyForAESEncryption12
+  aes-key: "G0--|cis1QQAM*|6TMYP7SaSm£n2sag"
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  level:
+    web: DEBUG

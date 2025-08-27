@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,7 +18,7 @@ public class LogEvent {
 
     private String id;
 
-    private Instant timestamp;
+    private OffsetDateTime timestamp;
 
     private String level;
 
